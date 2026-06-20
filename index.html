@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>DaddyOS 95 — Happy Father's Day!</title>
+  <meta name="description" content="A retro Windows 95-style Father's Day gift. Happy Father's Day, Daddy!" />
+
+  <!-- Favicon: pixel-art coffee cup SVG inlined as data URI -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23008080'/%3E%3Crect x='7' y='12' width='14' height='14' rx='1' fill='%23F5F0E8'/%3E%3Crect x='21' y='14' width='4' height='8' rx='2' fill='%23F5F0E8'/%3E%3Crect x='9' y='8' width='2' height='4' fill='%23cc6644'/%3E%3Crect x='13' y='6' width='2' height='6' fill='%23cc6644'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Press+Start+2P&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Design tokens ── */
+    :root {
+      --teal:        #008080;
+      --teal-dark:   #004c4c;
+      --cream:       #F5F0E8;
+      --rust:        #C0522A;
+      --rust-dark:   #8B3A1E;
+      --rust-light:  #E07040;
+      --silver:      #C0C0C0;
+      --silver-dark: #808080;
+      --silver-light:#DFDFDF;
+      --black:       #000000;
+      --white:       #FFFFFF;
+      --dot-gap:     16px;
+    }
+
+    /* ── Boot screen ── */
+    #boot-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #000;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 24px;
+    }
+    #boot-screen.hidden { display: none; }
+
+    .boot-logo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(18px, 5vw, 36px);
+      color: var(--rust-light);
+      text-shadow: 2px 2px 0 var(--rust-dark);
+      text-align: center;
+      line-height: 1.6;
+    }
+    .boot-logo span { color: var(--cream); }
+
+    .boot-sub {
+      font-family: 'VT323', monospace;
+      font-size: clamp(14px, 3vw, 22px);
+      color: #aaa;
+      text-align: center;
+    }
+
+    .progress-bar-wrap {
+      width: min(320px, 80vw);
+      height: 20px;
+      border: 2px solid var(--silver);
+      background: #111;
+      position: relative;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--teal);
+      width: 0%;
+      transition: width 0.15s linear;
+    }
+    .progress-label {
+      font-family: 'VT323', monospace;
+      color: #aaa;
+      font-size: 16px;
+      text-align: center;
+    }
+
+    /* ── Desktop ── */
+    #desktop {
+      width: 100vw; min-height: 100vh;
+      background-color: var(--teal);
+      background-image: radial-gradient(circle, var(--teal-dark) 1px, transparent 1px);
+      background-size: var(--dot-gap) var(--dot-gap);
+      position: relative;
+      overflow: hidden;
+      font-family: 'VT323', monospace;
+    }
+
+    /* ── Taskbar ── */
+    #taskbar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: 40px;
+      background: var(--silver);
+      border-top: 2px solid var(--white);
+      display: flex; align-items: center;
+      gap: 4px; padding: 0 4px;
+      z-index: 1000;
+      box-shadow: inset 0 1px 0 var(--white);
+      overflow: hidden;
+    }
+    #taskbar-btns {
+      display: flex; align-items: center; gap: 4px;
+      flex: 1; overflow-x: auto; overflow-y: hidden;
+      scrollbar-width: none;
+    }
+    #taskbar-btns::-webkit-scrollbar { display: none; }
+
+    #start-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 2px 8px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      background: var(--silver);
+      border: 2px solid;
+      border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
+      cursor: pointer;
+      white-space: nowrap;
+      min-height: 30px;
+    }
+    #start-btn:active, #start-btn.active {
+      border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+    }
+    #start-btn .start-icon { font-size: 18px; }
+
+    .taskbar-divider {
+      width: 2px; height: 28px;
+      border-left: 1px solid var(--silver-dark);
+      border-right: 1px solid var(--white);
+      margin: 0 2px;
+    }
+
+    #taskbar-clock {
+      margin-left: auto;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      padding: 2px 8px;
+      border: 2px solid;
+      border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+      min-width: 70px; text-align: center;
+      line-height: 1;
+    }
+
+    .taskbar-btn {
+      display: flex; align-items: center; gap: 4px;
+      padding: 2px 6px;
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      background: var(--silver);
+      border: 2px solid;
+      border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+      cursor: pointer;
+      min-height: 28px;
+      max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .taskbar-btn:hover { background: var(--silver-light); }
+    .taskbar-btn.active {
+      border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
+      background: var(--silver-dark);
+      color: var(--white);
+    }
+
+    /* ── Start menu ── */
+    #start-menu {
+      display: none;
+      position: fixed; bottom: 40px; left: 0;
+      width: min(260px, 90vw);
+      background: var(--silver);
+      border: 2px solid;
+      border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
+      z-index: 2000;
+      box-shadow: 3px 3px 0 var(--black);
+    }
+    #start-menu.open { display: flex; }
+
+    .start-sidebar {
+      width: 30px;
+      background: var(--rust);
+      display: flex; align-items: flex-end; justify-content: center;
+      padding-bottom: 8px;
+    }
+    .start-sidebar-text {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--cream);
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    .start-items {
+      flex: 1;
+      display: flex; flex-direction: column;
+    }
+    .start-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 10px;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .start-item:hover { background: var(--rust); color: var(--white); }
+    .start-item .si-icon { font-size: 22px; width: 26px; text-align: center; }
+    .start-item.separator { border-top: 1px solid var(--silver-dark); margin-top: 4px; padding-top: 8px; }
+
+    /* ── Desktop icons ── */
+    .desktop-icons {
+      position: absolute;
+      top: 16px; left: 16px;
+      display: flex; flex-direction: column; gap: 16px;
+      z-index: 10;
+    }
+    .desktop-icon {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 4px; cursor: pointer;
+      width: 80px; text-align: center;
+      -webkit-user-select: none; user-select: none;
+    }
+    .desktop-icon:hover .di-label { background: var(--rust); color: var(--white); }
+    .desktop-icon .di-emoji { font-size: 40px; }
+    .desktop-icon .di-label {
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      color: var(--white);
+      text-shadow: 1px 1px 0 var(--black);
+      padding: 1px 3px;
+      word-break: break-word;
+      line-height: 1.2;
+    }
+
+    /* ── Windows ── */
+    .win {
+      position: absolute;
+      min-width: 280px;
+      background: var(--silver);
+      border: 2px solid;
+      border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
+      box-shadow: 3px 3px 0 var(--black);
+      display: none;
+      flex-direction: column;
+      z-index: 100;
+    }
+    .win.open { display: flex; }
+    .win.focused { z-index: 200; }
+
+    .win-titlebar {
+      display: flex; align-items: center;
+      background: linear-gradient(to right, var(--rust), var(--rust-light));
+      padding: 3px 4px;
+      gap: 6px;
+      cursor: move;
+      -webkit-user-select: none; user-select: none;
+    }
+    .win-title-icon { font-size: 16px; }
+    .win-title-text {
+      flex: 1;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      color: var(--white);
+      text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .win-btn {
+      width: 16px; height: 14px;
+      background: var(--silver);
+      border: 1px solid;
+      border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
+      font-size: 9px; line-height: 12px; text-align: center;
+      cursor: pointer;
+      font-family: monospace;
+      flex-shrink: 0;
+    }
+    .win-btn:active { border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark); }
+
+    .win-menubar {
+      display: flex;
+      background: var(--silver);
+      border-bottom: 1px solid var(--silver-dark);
+      padding: 1px 4px;
+      font-family: 'VT323', monospace;
+      font-size: 15px;
+      gap: 2px;
+    }
+    .win-menubar span {
+      padding: 1px 6px; cursor: pointer;
+    }
+    .win-menubar span:hover { background: var(--rust); color: var(--white); }
+
+    .win-body {
+      flex: 1;
+      background: var(--cream);
+      overflow: auto;
+      padding: 20px;
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      color: var(--black);
+      min-height: 420px;
+    }
+    .win-statusbar {
+      background: var(--silver);
+      border-top: 1px solid var(--silver-dark);
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      padding: 2px 6px;
+      display: flex; gap: 8px;
+    }
+    .win-statusbar span {
+      border: 1px solid;
+      border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+      padding: 0 6px;
+    }
+
+    /* ── Shutdown modal ── */
+    #shutdown-modal {
+      display: none;
+      position: fixed; inset: 0; z-index: 5000;
+      background: rgba(0,0,0,0.4);
+      align-items: center; justify-content: center;
+    }
+    #shutdown-modal.open { display: flex; }
+    .shutdown-box {
+      background: var(--silver);
+      border: 2px solid;
+      border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
+      box-shadow: 4px 4px 0 var(--black);
+      width: min(380px, 90vw);
+    }
+    .shutdown-titlebar {
+      background: linear-gradient(to right, var(--rust), var(--rust-light));
+      padding: 4px 8px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: var(--white);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .shutdown-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+    .shutdown-icon-row { display: flex; gap: 16px; align-items: flex-start; }
+    .shutdown-icon { font-size: 48px; }
+    .shutdown-text {
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      line-height: 1.5;
+    }
+    .shutdown-btns {
+      display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    }
+    .shutdown-btn {
+      padding: 4px 16px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      background: var(--silver);
+      border: 2px solid;
+      border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
+      cursor: pointer;
+      min-width: 80px;
+    }
+    .shutdown-btn:active { border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark); }
+
+    /* ── Lightbox ── */
+    #lightbox {
+      display: none;
+      position: fixed; inset: 0; z-index: 3000;
+      background: rgba(0,0,0,0.85);
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+    }
+    #lightbox.open { display: flex; }
+    #lightbox img {
+      max-width: min(90vw, 800px);
+      max-height: 70vh;
+      border: 4px solid var(--cream);
+      box-shadow: 0 0 0 2px var(--black);
+      object-fit: contain;
+    }
+    .lightbox-caption {
+      font-family: 'VT323', monospace;
+      font-size: 20px;
+      color: var(--cream);
+      text-align: center;
+    }
+    .lightbox-nav {
+      display: flex; gap: 24px; align-items: center;
+    }
+    .lightbox-nav button {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      padding: 6px 12px;
+      background: var(--silver);
+      border: 2px solid;
+      border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
+      cursor: pointer;
+    }
+    .lightbox-close {
+      position: fixed; top: 16px; right: 16px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      padding: 6px 10px;
+      background: var(--rust);
+      color: var(--white);
+      border: 2px solid;
+      border-color: var(--rust-light) var(--rust-dark) var(--rust-dark) var(--rust-light);
+      cursor: pointer;
+    }
+    .lightbox-counter {
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      color: #aaa;
+    }
+
+    /* ── Photos grid ── */
+    .photos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 8px;
+    }
+    .photo-thumb {
+      aspect-ratio: 1;
+      background: var(--silver);
+      border: 2px solid;
+      border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+      cursor: pointer;
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      position: relative;
+    }
+    .photo-thumb img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .photo-thumb:hover { border-color: var(--rust); }
+    .no-photos-msg {
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      text-align: center;
+      padding: 20px;
+      color: var(--silver-dark);
+    }
+
+    /* ── Text window body ── */
+    .txt-body {
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      color: var(--black);
+    }
+
+    /* ── Coffee app ── */
+    .coffee-app {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 16px; text-align: center;
+    }
+    .coffee-emoji { font-size: 80px; }
+    .coffee-order {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 11px;
+      line-height: 2.2;
+      background: var(--silver);
+      border: 2px solid;
+      border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+      padding: 12px 16px;
+      text-align: left;
+    }
+    .coffee-btn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 8px;
+      padding: 8px 16px;
+      background: var(--rust);
+      color: var(--white);
+      border: 2px solid;
+      border-color: var(--rust-light) var(--rust-dark) var(--rust-dark) var(--rust-light);
+      cursor: pointer;
+    }
+    .coffee-btn:active { border-color: var(--rust-dark) var(--rust-light) var(--rust-light) var(--rust-dark); }
+
+    /* ── Bike app ── */
+    .bike-app {
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .bike-stat {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--silver);
+      border: 2px solid;
+      border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+      padding: 6px 10px;
+    }
+    .bike-stat .bs-icon { font-size: 32px; }
+    .bike-stat .bs-label { font-size: 22px; flex: 1; }
+    .bike-stat .bs-val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 11px;
+      color: var(--rust);
+    }
+
+    /* ── AI Chat window ── */
+    .chat-messages {
+      display: flex; flex-direction: column; gap: 10px;
+      flex: 1; overflow-y: auto;
+      padding: 4px;
+      background: var(--cream);
+    }
+    .chat-msg {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .chat-msg .cm-who {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: var(--rust);
+    }
+    .chat-msg.user .cm-who { color: var(--teal-dark); }
+    .chat-msg .cm-text {
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      line-height: 1.4;
+      background: var(--silver);
+      border: 1px solid var(--silver-dark);
+      padding: 6px 12px;
+      max-width: 90%;
+    }
+    .chat-msg.user .cm-text {
+      align-self: flex-end;
+      background: #D8EEE8;
+    }
+    .chat-input-row {
+      display: flex; gap: 4px; margin-top: 6px;
+    }
+    .chat-input {
+      flex: 1;
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      border: 2px solid;
+      border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+      padding: 4px 10px;
+      background: var(--cream);
+    }
+    .chat-send {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      padding: 6px 12px;
+      background: var(--silver);
+      border: 2px solid;
+      border-color: var(--white) var(--silver-dark) var(--silver-dark) var(--white);
+      cursor: pointer;
+    }
+    .chat-send:active { border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark); }
+    .chat-typing {
+      font-family: 'VT323', monospace; font-size: 15px; color: var(--silver-dark);
+      display: none;
+    }
+
+    /* ── About window ── */
+    .about-grid {
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .about-row {
+      display: flex; gap: 0;
+      border: 2px solid;
+      border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+    }
+    .about-key {
+      background: var(--silver);
+      padding: 6px 12px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      width: 160px; flex-shrink: 0;
+      display: flex; align-items: center;
+    }
+    .about-val {
+      background: var(--cream);
+      padding: 6px 12px;
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      flex: 1;
+      display: flex; align-items: center;
+    }
+
+    /* ── Wisdom window ── */
+    .wisdom-entry {
+      display: flex; gap: 8px; align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .wisdom-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      color: var(--rust);
+      min-width: 30px;
+      padding-top: 4px;
+    }
+    .wisdom-text { font-size: 22px; line-height: 1.5; }
+
+    /* ── Wisdom window shrinks to fit content ── */
+    #win-wisdom .win-body { min-height: unset; }
+
+    /* ── Letter window fixed height with scroll ── */
+    #win-letter { max-height: 500px; }
+    #win-letter .win-body { min-height: unset; overflow-y: auto; }
+    #win-letter .txt-body { font-size: 22px; line-height: 1.5; }
+
+    /* ── Chat window body is flex column so input pins to bottom ── */
+    #win-claude .win-body {
+      display: flex; flex-direction: column;
+      height: 600px; min-height: 0; max-height: 600px; overflow: hidden;
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 600px) {
+      .desktop-icons { flex-direction: row; flex-wrap: wrap; top: 8px; left: 8px; gap: 8px; }
+      .desktop-icon { width: 90px; }
+      .desktop-icon .di-emoji { font-size: 32px; }
+      .desktop-icon .di-label { font-size: 13px; white-space: nowrap; }
+      .win { min-width: unset; width: 96vw !important; left: 2vw !important; }
+      .win-title-text { font-size: 7px; }
+      .photos-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 6px; }
+    }
+    @media (max-width: 400px) {
+      :root { --dot-gap: 12px; }
+      #taskbar { height: 36px; }
+      #start-btn { font-size: 7px; padding: 2px 5px; }
+      .desktop-icon { width: 56px; gap: 2px; }
+      .desktop-icon .di-emoji { font-size: 24px; }
+      .desktop-icon .di-label { font-size: 11px; }
+      .win-title-text { font-size: 6px; }
+      #taskbar-clock { font-size: 15px; min-width: 55px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     BOOT SCREEN
+══════════════════════════════════════════════════════════ -->
+<div id="boot-screen">
+  <div class="boot-logo">Daddy<span>OS</span> 95</div>
+  <div class="boot-sub">Loading 19 years of Dad Mode…</div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progress-bar"></div>
+  </div>
+  <div class="progress-label" id="progress-label">Initializing Dad Jokes…</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DESKTOP
+══════════════════════════════════════════════════════════ -->
+<div id="desktop">
+
+  <!-- Desktop icons -->
+  <div class="desktop-icons">
+    <div class="desktop-icon" onclick="openWin('win-photos')">
+      <div class="di-emoji">📷</div>
+      <div class="di-label">Our Photos</div>
+    </div>
+    <div class="desktop-icon" onclick="openWin('win-letter')">
+      <div class="di-emoji">💌</div>
+      <div class="di-label">Letter_from_Aishi.txt</div>
+    </div>
+    <div class="desktop-icon" onclick="openWin('win-wisdom')">
+      <div class="di-emoji">🧠</div>
+      <div class="di-label">Daddy_Wisdom.txt</div>
+    </div>
+    <div class="desktop-icon" onclick="openWin('win-coffee')">
+      <div class="di-emoji">☕️</div>
+      <div class="di-label">StarbucksOS.exe</div>
+    </div>
+    <div class="desktop-icon" onclick="openWin('win-bike')">
+      <div class="di-emoji">🚴</div>
+      <div class="di-label">BikeTracker.app</div>
+    </div>
+    <div class="desktop-icon" onclick="openWin('win-claude')">
+      <div class="di-emoji">🤖</div>
+      <div class="di-label">Messages_From_Aishi.exe</div>
+    </div>
+    <div class="desktop-icon" onclick="openWin('win-about')">
+      <div class="di-emoji">ℹ️</div>
+      <div class="di-label">About Daddy</div>
+    </div>
+    <div class="desktop-icon" onclick="openWin('win-glasses')">
+      <div class="di-emoji">🕵️</div>
+      <div class="di-label">GlassesFinder.exe</div>
+    </div>
+  </div>
+
+  <!-- ── WINDOW: Photos ── -->
+  <div class="win" id="win-photos" style="top:60px; left:120px; width:min(720px,80vw);">
+    <div class="win-titlebar" data-win="win-photos">
+      <span class="win-title-icon">📷</span>
+      <span class="win-title-text">Our Photos — Photo Viewer</span>
+      <button class="win-btn" onclick="closeWin('win-photos')">✕</button>
+    </div>
+    <div class="win-menubar">
+      <span>File</span><span>View</span><span>Help</span>
+    </div>
+    <div class="win-body" id="photos-body">
+      <!-- Photos loaded by JS -->
+    </div>
+    <div class="win-statusbar">
+      <span id="photos-count">0 photos</span>
+      <span>Click a photo to see the story</span>
+    </div>
+  </div>
+
+  <!-- ── WINDOW: Letter ── -->
+  <div class="win" id="win-letter" style="top:80px; left:120px; width:min(1020px,88vw);">
+    <div class="win-titlebar" data-win="win-letter">
+      <span class="win-title-icon">💌</span>
+      <span class="win-title-text">Letter_from_Aishi.txt — Notepad</span>
+      <button class="win-btn" onclick="closeWin('win-letter')">✕</button>
+    </div>
+    <div class="win-menubar"><span>File</span><span>Edit</span><span>Help</span></div>
+    <div class="win-body">
+      <div class="txt-body">Dear Daddy,
+
+This Father's Day means something different this year. Between last year and this one, I went through my first year of college, and if anything tests a bond, it's distance. I'm glad to say we didn't just survive it. We came out closer.
+
+I love this day because it's just ours, a daddy-daughter celebration. Not like a birthday, where everyone who's ever met you lines up to tell you how much you matter. Today, that's just me and Shivi's job.
+
+Do you remember when you, Mommy, and Shivi had to finally leave me at Georgia Tech? We were in the elevator going down toward the Uber that would take you all to the airport. Earlier, your flight had been delayed, and I was so happy, because it hadn't felt real yet that I was on my own in this unknown state, unknown city, unknown school. When the time came for all of you to leave, we sat outside Armstrong Hall, and Mommy and I cried. Maybe you also shed a tear or two. But what stood out to me most was the pillar you had become for us. Even if you felt sad, you didn't let it overtake you because you still had to do the hardest part and physically leave.
+
+This year, just listing things I like about you feels shallow. So here's the one I've admired the longest, the one nobody else in this family has, which is exactly why we all lean on you for it: Steadiness. Steadiness for others, even when you don't feel that steady yourself.
+
+I know the job search has been weighing on you. But you still show up for us like nothing's changed, which just proves my point. A job was never what made you who you are to this family. Your willingness to take us everywhere we've desired, to say yes to whatever we were chasing before even asking why, to put your own plans last, that's the real answer to who you are.
+
+So if there's a day you don't feel so steady, let us be the pillar for you. The way you were for me that day outside Armstrong Hall. Someone very wise once told me to leave uncertainties in God's hands. Take your own advice. Happy Father's Day.
+
+Infinite Love Always,
+Aishi ❤︎</div>
+    </div>
+    <div class="win-statusbar"><span>Letter_from_Aishi.txt</span><span>Read-Only</span></div>
+  </div>
+
+  <!-- ── WINDOW: Wisdom ── -->
+  <div class="win" id="win-wisdom" style="top:100px; left:160px; width:min(680px,78vw);">
+    <div class="win-titlebar" data-win="win-wisdom">
+      <span class="win-title-icon">🧠</span>
+      <span class="win-title-text">Daddy_Wisdom.txt — Daddy's Greatest Hits</span>
+      <button class="win-btn" onclick="closeWin('win-wisdom')">✕</button>
+    </div>
+    <div class="win-menubar"><span>File</span><span>Edit</span><span>Help</span></div>
+    <div class="win-body">
+      <div id="wisdom-list"></div>
+    </div>
+    <div class="win-statusbar"><span>Daddy_Wisdom.txt</span><span>5 nuggets</span></div>
+  </div>
+
+  <!-- ── WINDOW: Coffee ── -->
+  <div class="win" id="win-coffee" style="top:120px; left:160px; width:min(560px,78vw);">
+    <div class="win-titlebar" data-win="win-coffee">
+      <span class="win-title-icon">☕️</span>
+      <span class="win-title-text">StarbucksOS v1.0.exe</span>
+      <button class="win-btn" onclick="closeWin('win-coffee')">✕</button>
+    </div>
+    <div class="win-menubar"><span>File</span><span>Order</span><span>Help</span></div>
+    <div class="win-body">
+      <div class="coffee-app">
+        <div class="coffee-emoji">☕️</div>
+        <div style="font-family:'Press Start 2P',monospace;font-size:14px;margin-bottom:4px;">DADDY'S ORDER</div>
+        <div class="coffee-order">
+          &gt; Name:   Sumit Kumar*<br>
+          &gt; Size:   Venti<br>
+          &gt; Drink:  Chai Latte<br>
+          &gt; Extras: Extra Hot
+        </div>
+        <div style="font-family:'VT323',monospace;font-size:20px;color:var(--silver-dark);margin-top:-8px;text-align:left;padding:0 4px;">
+          * First time in history your name is spelled right.
+        </div>
+        <button class="coffee-btn" onclick="coffeeOrder()">☕️ PLACE ORDER</button>
+        <div id="coffee-msg" style="font-family:'VT323',monospace;font-size:26px;color:var(--rust);display:none;"></div>
+      </div>
+    </div>
+    <div class="win-statusbar"><span>StarbucksOS.exe</span><span>Ready</span></div>
+  </div>
+
+  <!-- ── WINDOW: Bike ── -->
+  <div class="win" id="win-bike" style="top:80px; left:160px; width:min(640px,78vw);">
+    <div class="win-titlebar" data-win="win-bike">
+      <span class="win-title-icon">🚴</span>
+      <span class="win-title-text">BikeTracker.app — Daddy's Stats</span>
+      <button class="win-btn" onclick="closeWin('win-bike')">✕</button>
+    </div>
+    <div class="win-menubar"><span>File</span><span>Stats</span><span>Help</span></div>
+    <div class="win-body">
+      <div class="bike-app">
+        <div class="bike-stat">
+          <span class="bs-icon">🚴</span>
+          <span class="bs-label">Rides Completed</span>
+          <span class="bs-val" style="font-size:20px;">∞</span>
+        </div>
+        <div class="bike-stat">
+          <span class="bs-icon">📏</span>
+          <span class="bs-label">Total Distance</span>
+          <span class="bs-val">A LOT</span>
+        </div>
+        <div class="bike-stat">
+          <span class="bs-icon">⛰️</span>
+          <span class="bs-label">Century Park Laps</span>
+          <span class="bs-val" style="font-size:20px;">∞</span><span class="bs-val"> TIMES</span>
+        </div>
+        <div class="bike-stat">
+          <span class="bs-icon">☀️</span>
+          <span class="bs-label">Early Morning Rides</span>
+          <span class="bs-val">TOO MANY</span>
+        </div>
+        <div class="bike-stat">
+          <span class="bs-icon">😵</span>
+          <span class="bs-label">Victims</span>
+          <span class="bs-val">Shivi, Mommy, Aishi</span>
+        </div>
+        <div class="bike-stat">
+          <span class="bs-icon">💪</span>
+          <span class="bs-label">Dad Strength Level</span>
+          <span class="bs-val">MAXIMUM</span>
+        </div>
+        <div class="bike-stat">
+          <span class="bs-icon">🏆</span>
+          <span class="bs-label">Best Dad Award</span>
+          <span class="bs-val">EVERY YEAR</span>
+        </div>
+      </div>
+    </div>
+    <div class="win-statusbar"><span>BikeTracker.app</span><span>All systems go</span></div>
+  </div>
+
+  <!-- ── WINDOW: Claude AI ── -->
+  <div class="win" id="win-claude" style="top:90px; left:160px; width:min(680px,78vw);">
+    <div class="win-titlebar" data-win="win-claude">
+      <span class="win-title-icon">🤖</span>
+      <span class="win-title-text">Messages_From_Aishi.exe</span>
+      <button class="win-btn" onclick="closeWin('win-claude')">✕</button>
+    </div>
+    <div class="win-menubar"><span>File</span><span>Chat</span><span>Help</span></div>
+    <div class="win-body">
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-msg">
+          <div class="cm-who">AISHI 💛</div>
+          <div class="cm-text">Hi Daddy! I built this whole thing for you. Type anything and I'll write back. Happy Father's Day! 🎉</div>
+        </div>
+      </div>
+      <div class="chat-typing" id="chat-typing">Aishi is typing…</div>
+      <div class="chat-input-row">
+        <input class="chat-input" id="chat-input" type="text" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendChat()" maxlength="200" />
+        <button class="chat-send" onclick="sendChat()">SEND</button>
+      </div>
+    </div>
+    <div class="win-statusbar"><span>Messages_From_Aishi.exe</span><span>Connected</span></div>
+  </div>
+
+  <!-- ── WINDOW: About ── -->
+  <div class="win" id="win-about" style="top:70px; left:160px; width:min(680px,78vw);">
+    <div class="win-titlebar" data-win="win-about">
+      <span class="win-title-icon">ℹ️</span>
+      <span class="win-title-text">About Daddy — System Properties</span>
+      <button class="win-btn" onclick="closeWin('win-about')">✕</button>
+    </div>
+    <div class="win-menubar"><span>File</span><span>Help</span></div>
+    <div class="win-body">
+      <div style="text-align:center; font-size:48px; margin-bottom:12px;">👨‍💻</div>
+      <div class="about-grid">
+        <div class="about-row">
+          <div class="about-key">Name</div>
+          <div class="about-val">Daddy ❤️</div>
+        </div>
+        <div class="about-row">
+          <div class="about-key">Version</div>
+          <div class="about-val">DaddyOS 95 (Build 19)</div>
+        </div>
+        <div class="about-row">
+          <div class="about-key">Uptime</div>
+          <div class="about-val" id="uptime-val">19 years, counting…</div>
+        </div>
+        <div class="about-row">
+          <div class="about-key">CPU</div>
+          <div class="about-val">Dad Brain™ @ MAX GHz</div>
+        </div>
+        <div class="about-row">
+          <div class="about-key">RAM</div>
+          <div class="about-val">Infinite Love Cache</div>
+        </div>
+        <div class="about-row">
+          <div class="about-key">Interests</div>
+          <div class="about-val">AI, ☕️, 🚴, Family</div>
+        </div>
+        <div class="about-row">
+          <div class="about-key">Status</div>
+          <div class="about-val">🟢 BEST DAD RUNNING</div>
+        </div>
+      </div>
+    </div>
+    <div class="win-statusbar"><span>System Properties</span><span>All systems nominal</span></div>
+  </div>
+
+  <!-- ── WINDOW: GlassesFinder ── -->
+  <div class="win" id="win-glasses" style="top:100px; left:160px; width:min(600px,78vw);">
+    <div class="win-titlebar" data-win="win-glasses">
+      <span class="win-title-icon">🕵️</span>
+      <span class="win-title-text">GlassesFinder.exe — GPS Locator v1.0</span>
+      <button class="win-btn" onclick="closeWin('win-glasses')">✕</button>
+    </div>
+    <div class="win-menubar"><span>File</span><span>Scan</span><span>Help</span></div>
+    <div class="win-body">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center;">
+        <div style="font-size:72px;" id="glasses-emoji">🔍</div>
+        <div style="font-family:'Press Start 2P',monospace;font-size:13px;line-height:2.2;">DADDY'S GLASSES<br>LOCATOR SYSTEM</div>
+        <div style="font-family:'VT323',monospace;font-size:22px;color:var(--silver-dark);">Satellites: 4 connected &nbsp;|&nbsp; Search radius: 10 miles</div>
+        <div id="glasses-result" style="
+          font-family:'VT323',monospace;font-size:24px;line-height:1.5;
+          background:var(--silver);border:2px solid;
+          border-color:var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+          padding:12px 16px;width:100%;min-height:64px;
+          display:flex;align-items:center;justify-content:center;
+        ">Press LOCATE to begin scan.</div>
+        <button class="coffee-btn" onclick="locateGlasses()" style="width:100%;font-size:9px;padding:10px;">🔍 LOCATE GLASSES</button>
+        <div id="glasses-count" style="font-family:'VT323',monospace;font-size:15px;color:var(--silver-dark);"></div>
+      </div>
+    </div>
+    <div class="win-statusbar"><span>GlassesFinder.exe</span><span id="glasses-status">Ready</span></div>
+  </div>
+
+</div><!-- /desktop -->
+
+<!-- ── Taskbar ── -->
+<div id="taskbar">
+  <button id="start-btn" onclick="toggleStartMenu()">
+    <span class="start-icon">🖥️</span>
+    Start
+  </button>
+  <div class="taskbar-divider"></div>
+  <div id="taskbar-btns"></div>
+  <div id="taskbar-clock"></div>
+</div>
+
+<!-- ── Start menu ── -->
+<div id="start-menu">
+  <div class="start-sidebar">
+    <div class="start-sidebar-text">DaddyOS 95</div>
+  </div>
+  <div class="start-items">
+    <div class="start-item" onclick="openWin('win-photos'); closeStartMenu()">
+      <span class="si-icon">📷</span> Our Photos
+    </div>
+    <div class="start-item" onclick="openWin('win-letter'); closeStartMenu()">
+      <span class="si-icon">💌</span> Letter from Aishi
+    </div>
+    <div class="start-item" onclick="openWin('win-wisdom'); closeStartMenu()">
+      <span class="si-icon">🧠</span> Daddy's Wisdom
+    </div>
+    <div class="start-item" onclick="openWin('win-coffee'); closeStartMenu()">
+      <span class="si-icon">☕️</span> StarbucksOS.exe
+    </div>
+    <div class="start-item" onclick="openWin('win-bike'); closeStartMenu()">
+      <span class="si-icon">🚴</span> BikeTracker.app
+    </div>
+    <div class="start-item" onclick="openWin('win-claude'); closeStartMenu()">
+      <span class="si-icon">🤖</span> Messages_From_Aishi.exe
+    </div>
+    <div class="start-item" onclick="openWin('win-about'); closeStartMenu()">
+      <span class="si-icon">ℹ️</span> About Daddy
+    </div>
+    <div class="start-item" onclick="openWin('win-glasses'); closeStartMenu()">
+      <span class="si-icon">🕵️</span> GlassesFinder.exe
+    </div>
+    <div class="start-item separator" onclick="showShutdown(); closeStartMenu()">
+      <span class="si-icon">⏻</span> Shut Down Daddy…
+    </div>
+  </div>
+</div>
+
+<!-- ── Shutdown modal ── -->
+<div id="shutdown-modal">
+  <div class="shutdown-box">
+    <div class="shutdown-titlebar">⏻ &nbsp;Shut Down DaddyOS</div>
+    <div class="shutdown-body">
+      <div class="shutdown-icon-row">
+        <div class="shutdown-icon">👨‍💻</div>
+        <div class="shutdown-text">
+          <strong>Shut Down Daddy?</strong><br><br>
+          Warning: This operation cannot be completed.<br><br>
+          DaddyOS has been running for <strong>19 years</strong> without interruption.<br><br>
+          Reason: Dad mode cannot be turned off. ❤️
+        </div>
+      </div>
+      <div class="shutdown-btns">
+        <button class="shutdown-btn" onclick="closeShutdown()">OK (Can't)</button>
+        <button class="shutdown-btn" onclick="closeShutdown()">Cancel</button>
+        <button class="shutdown-btn" onclick="happyFathersDay()">Happy Father's Day! 🎉</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Lightbox ── -->
+<div id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">✕ Close</button>
+  <img id="lightbox-img" src="" alt="" />
+  <div class="lightbox-caption" id="lightbox-caption"></div>
+  <div class="lightbox-nav">
+    <button onclick="lightboxNav(-1)">◀ Prev</button>
+    <div class="lightbox-counter" id="lightbox-counter"></div>
+    <button onclick="lightboxNav(1)">Next ▶</button>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════
+//  BOOT SEQUENCE
+// ════════════════════════════════════════
+const bootMessages = [
+  'Initializing Dad Jokes…',
+  'Loading Unconditional Love…',
+  'Mounting Coffee Subsystem…',
+  'Calibrating Bike Sensors…',
+  'Syncing AI Knowledge Base…',
+  'Compiling 19 Years of Memories…',
+  'Starting Dad Mode™…',
+  'DaddyOS Ready! 🎉',
+];
+
+function runBoot() {
+  const bar = document.getElementById('progress-bar');
+  const label = document.getElementById('progress-label');
+  let step = 0;
+  const total = bootMessages.length;
+  const interval = setInterval(() => {
+    label.textContent = bootMessages[step];
+    bar.style.width = ((step + 1) / total * 100) + '%';
+    step++;
+    if (step >= total) {
+      clearInterval(interval);
+      setTimeout(() => {
+        document.getElementById('boot-screen').classList.add('hidden');
+        initDesktop();
+      }, 600);
+    }
+  }, 400);
+}
+runBoot();
+
+// ════════════════════════════════════════
+//  CLOCK
+// ════════════════════════════════════════
+function updateClock() {
+  const el = document.getElementById('taskbar-clock');
+  const now = new Date();
+  const h = now.getHours().toString().padStart(2, '0');
+  const m = now.getMinutes().toString().padStart(2, '0');
+  el.textContent = h + ':' + m;
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+// ════════════════════════════════════════
+//  INIT DESKTOP
+// ════════════════════════════════════════
+function initDesktop() {
+  buildWisdom();
+  loadPhotos();
+  updateClock();
+}
+
+// ════════════════════════════════════════
+//  WISDOM
+// ════════════════════════════════════════
+const dadWisdom = [
+  "\"Do your best and leave the rest.\"",
+  "\"Always strive to become the best version of yourself.\"",
+  "\"Are you hungry? Eat Belvita.\"",
+  "\"Be a data table.\" <span style='color:var(--silver-dark);font-size:15px;'>(while forgetting every password in existence)</span>",
+  "\"Everything in life happens for a reason.\"",
+  "",
+  "",
+];
+
+function buildWisdom() {
+  const el = document.getElementById('wisdom-list');
+  let num = 1;
+  dadWisdom.forEach(w => {
+    if (!w) return;
+    const div = document.createElement('div');
+    div.className = 'wisdom-entry';
+    div.innerHTML = `<div class="wisdom-num">${String(num).padStart(2,'0')}.</div><div class="wisdom-text">${w}</div>`;
+    el.appendChild(div);
+    num++;
+  });
+  const footer = document.createElement('div');
+  footer.style.cssText = 'margin-top:20px;padding-top:12px;border-top:1px solid var(--silver-dark);font-family:"VT323",monospace;font-size:20px;text-align:center;color:var(--rust);';
+  footer.innerHTML = 'You were my father for a reason ❤️';
+  el.appendChild(footer);
+}
+
+// ════════════════════════════════════════
+//  PHOTOS
+// ════════════════════════════════════════
+// Photos — add a caption for each (shown in the lightbox)
+const photoFiles = [
+  { src: 'IMG_3582.jpeg',      caption: '"The Salmon" in Norway with our accidentally non-alcoholic Heineken' },
+  { src: 'IMG_5986.jpeg',      caption: 'Sunset dolphin cruise in Cape Coral' },
+  { src: 'IMG_1802.jpeg',      caption: "Daddy's 50th birthday celebrated at CityWorks with Bua, Fufaji, Trisha Didi, and Anika" },
+  { src: 'IMG_6017.jpeg',      caption: 'Post-sunset cruise sky' },
+  { src: 'image_1.jpg',        caption: 'Planetarium in Chicago Downtown for a daddy-daughter day' },
+  { src: 'FullSizeRender.jpeg',caption: "Aishi's graduation surrounded by the people who she owes everything to" },
+  { src: 'IMG_0447.jpeg',      caption: 'Mini golf in Wisconsin Dells' },
+  { src: 'IMG_5203.jpeg',      caption: 'One of the many Chicago trips we\'ve taken' },
+  { src: 'IMG_4022.jpeg',      caption: 'Last day in London feat. AWESOME ICE CREAM' },
+];
+
+let allPhotos = [...photoFiles];
+let lightboxIndex = 0;
+
+function loadPhotos() {
+  const body = document.getElementById('photos-body');
+  const count = document.getElementById('photos-count');
+
+  if (allPhotos.length === 0) {
+    body.innerHTML = `<div class="no-photos-msg">📷 No photos yet!<br><br>Drop images into the <strong>/photos</strong> folder.</div>`;
+    count.textContent = '0 photos';
+    return;
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'photos-grid';
+  allPhotos.forEach((photo, i) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'photo-thumb';
+    const img = document.createElement('img');
+    img.src = 'photos/' + photo.src;
+    img.alt = photo.caption;
+    img.onerror = () => { thumb.innerHTML = '❌'; };
+    thumb.appendChild(img);
+    thumb.addEventListener('click', () => openLightbox(i));
+    grid.appendChild(thumb);
+  });
+  body.innerHTML = '';
+  body.appendChild(grid);
+  count.textContent = allPhotos.length + ' photo' + (allPhotos.length !== 1 ? 's' : '');
+}
+
+function openLightbox(idx) {
+  lightboxIndex = idx;
+  renderLightbox();
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+function renderLightbox() {
+  const photo = allPhotos[lightboxIndex];
+  const img = document.getElementById('lightbox-img');
+  const captionEl = document.getElementById('lightbox-caption');
+  const counter = document.getElementById('lightbox-counter');
+  img.src = 'photos/' + photo.src;
+  img.alt = photo.caption;
+  captionEl.textContent = photo.caption;
+  counter.textContent = (lightboxIndex + 1) + ' / ' + allPhotos.length;
+}
+function editCaption(idx) {
+  const text = prompt('Where was this taken?', allPhotos[idx].caption);
+  if (text !== null) { allPhotos[idx].caption = text; renderLightbox(); }
+}
+function lightboxNav(dir) {
+  lightboxIndex = (lightboxIndex + dir + allPhotos.length) % allPhotos.length;
+  renderLightbox();
+}
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lightbox').classList.contains('open')) return;
+  if (e.key === 'ArrowLeft') lightboxNav(-1);
+  if (e.key === 'ArrowRight') lightboxNav(1);
+  if (e.key === 'Escape') closeLightbox();
+});
+
+// ════════════════════════════════════════
+//  COFFEE
+// ════════════════════════════════════════
+function coffeeOrder() {
+  const msg = document.getElementById('coffee-msg');
+  msg.style.display = 'block';
+  msg.textContent = '☕️ Order placed for Sumit Kumar…';
+  setTimeout(() => { msg.textContent = '🔥 Heating to Extra Hot…'; }, 900);
+  setTimeout(() => { msg.textContent = '🥶 Barista says: "Is that hot enough?"'; }, 2000);
+  setTimeout(() => { msg.textContent = '❌ ERROR: Temperature insufficient. As always.'; }, 3200);
+}
+
+// ════════════════════════════════════════
+//  AI CHAT (fun dad-themed responses)
+// ════════════════════════════════════════
+const claudeResponses = [
+  "You've recommended Claude to so many people that I think Anthropic owes you a commission.",
+  "The bar for 'what a dad should be' was set by you. Everyone else is just trying to keep up.",
+  "Century Park has seen more of you in the past year than I have. I'm not jealous. (I'm a little jealous.)",
+  "I made this whole thing from scratch because you deserve something as amazing as you are. 💛",
+  "I love you so much. Even when you turn on my room light at 7am to go biking.",
+  "You're the reason I think technology is cool. You've been nerding out about AI since before it was trendy.",
+  "Honestly Daddy, you're my favorite person to talk to. Even when every conversation we have turns into a Claude debrief.",
+  "Thank you for always believing in me, even when I didn't believe in myself. That's a you thing. ❤️",
+  "One day I'll build you something even cooler. For now: Happy Father's Day, Daddy! 🎉",
+  "You taught me that curiosity is a superpower. Look what it made me do: build you a whole OS. 😄",
+];
+let chatResponseIdx = 0;
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const msgs = document.getElementById('chat-messages');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  // User bubble
+  const userMsg = document.createElement('div');
+  userMsg.className = 'chat-msg user';
+  userMsg.innerHTML = `<div class="cm-who">YOU</div><div class="cm-text">${escHtml(text)}</div>`;
+  msgs.appendChild(userMsg);
+
+  // Typing indicator
+  const typing = document.getElementById('chat-typing');
+  typing.style.display = 'block';
+  msgs.scrollTop = msgs.scrollHeight;
+
+  setTimeout(() => {
+    typing.style.display = 'none';
+    const reply = document.createElement('div');
+    reply.className = 'chat-msg';
+    reply.innerHTML = `<div class="cm-who">AISHI 💛</div><div class="cm-text">${claudeResponses[chatResponseIdx % claudeResponses.length]}</div>`;
+    chatResponseIdx++;
+    msgs.appendChild(reply);
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 1200 + Math.random() * 600);
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ════════════════════════════════════════
+//  WINDOW MANAGEMENT
+// ════════════════════════════════════════
+let zTop = 200;
+const taskbarBtns = {};
+let cascadeStep = 0;
+
+function openWin(id) {
+  const win = document.getElementById(id);
+  if (!win) return;
+  closeStartMenu();
+  if (win.classList.contains('open')) {
+    focusWin(id);
+    return;
+  }
+  if (window.innerWidth <= 600) {
+    win.style.left = '2vw';
+    win.style.top = '60px';
+  } else {
+    // Cascade: offset each new window so they don't all overlap
+    const offset = (cascadeStep % 6) * 36;
+    win.style.left = (160 + offset) + 'px';
+    win.style.top  = (60  + offset) + 'px';
+    cascadeStep++;
+  }
+  win.classList.add('open');
+  focusWin(id);
+  addTaskbarBtn(id, win.querySelector('.win-title-text').textContent, win.querySelector('.win-title-icon').textContent);
+}
+
+function closeWin(id) {
+  const win = document.getElementById(id);
+  if (!win) return;
+  win.style.display = '';
+  win.classList.remove('open');
+  win.classList.remove('focused');
+  removeTaskbarBtn(id);
+}
+
+function focusWin(id) {
+  document.querySelectorAll('.win.focused').forEach(w => w.classList.remove('focused'));
+  const win = document.getElementById(id);
+  if (!win) return;
+  zTop++;
+  win.style.zIndex = zTop;
+  win.classList.add('focused');
+  // Update taskbar btn
+  document.querySelectorAll('.taskbar-btn').forEach(b => b.classList.remove('active'));
+  if (taskbarBtns[id]) taskbarBtns[id].classList.add('active');
+}
+
+function addTaskbarBtn(id, label, icon) {
+  if (taskbarBtns[id]) return;
+  const btn = document.createElement('button');
+  btn.className = 'taskbar-btn active';
+  btn.textContent = (icon || '') + ' ' + label.split('—')[0].trim();
+  btn.onclick = () => {
+    const win = document.getElementById(id);
+    if (win && win.classList.contains('focused')) {
+      win.style.display = 'none';
+      btn.classList.remove('active');
+    } else {
+      if (win) win.style.display = 'flex';
+      focusWin(id);
+    }
+  };
+  taskbarBtns[id] = btn;
+  document.getElementById('taskbar-btns').appendChild(btn);
+}
+
+function removeTaskbarBtn(id) {
+  if (taskbarBtns[id]) {
+    taskbarBtns[id].remove();
+    delete taskbarBtns[id];
+  }
+}
+
+// ── Drag ──
+document.querySelectorAll('.win-titlebar').forEach(bar => {
+  const winId = bar.dataset.win;
+  const win = document.getElementById(winId);
+  let drag = false, ox = 0, oy = 0;
+
+  function startDrag(cx, cy) {
+    if (window.innerWidth <= 600) return; // disable drag on mobile
+    drag = true;
+    const rect = win.getBoundingClientRect();
+    ox = cx - rect.left;
+    oy = cy - rect.top;
+    focusWin(winId);
+  }
+  function moveDrag(cx, cy) {
+    if (!drag) return;
+    let nx = cx - ox;
+    let ny = cy - oy;
+    // keep within viewport
+    nx = Math.max(0, Math.min(nx, window.innerWidth - win.offsetWidth));
+    ny = Math.max(0, Math.min(ny, window.innerHeight - win.offsetHeight - 40));
+    win.style.left = nx + 'px';
+    win.style.top = ny + 'px';
+  }
+  function endDrag() { drag = false; }
+
+  bar.addEventListener('mousedown', e => { if (e.button === 0) startDrag(e.clientX, e.clientY); });
+  document.addEventListener('mousemove', e => moveDrag(e.clientX, e.clientY));
+  document.addEventListener('mouseup', endDrag);
+
+  bar.addEventListener('touchstart', e => {
+    const t = e.touches[0];
+    startDrag(t.clientX, t.clientY);
+  }, { passive: true });
+  document.addEventListener('touchmove', e => {
+    if (!drag) return;
+    e.preventDefault();
+    const t = e.touches[0];
+    moveDrag(t.clientX, t.clientY);
+  }, { passive: false });
+  document.addEventListener('touchend', endDrag);
+
+  win.addEventListener('mousedown', () => focusWin(winId));
+  win.addEventListener('touchstart', () => focusWin(winId), { passive: true });
+});
+
+// ── Click desktop to deselect icons ──
+document.getElementById('desktop').addEventListener('click', e => {
+  if (e.target === document.getElementById('desktop')) {
+    document.querySelectorAll('.desktop-icon').forEach(i => i.style.outline = '');
+  }
+});
+
+// ── Desktop icon single click highlight ──
+function iconSingleClick(el) {
+  document.querySelectorAll('.desktop-icon').forEach(i => i.style.outline = '');
+  el.style.outline = '1px dotted var(--white)';
+}
+
+// ════════════════════════════════════════
+//  START MENU
+// ════════════════════════════════════════
+function toggleStartMenu() {
+  const m = document.getElementById('start-menu');
+  const btn = document.getElementById('start-btn');
+  m.classList.toggle('open');
+  btn.classList.toggle('active');
+}
+function closeStartMenu() {
+  document.getElementById('start-menu').classList.remove('open');
+  document.getElementById('start-btn').classList.remove('active');
+}
+document.addEventListener('click', e => {
+  const m = document.getElementById('start-menu');
+  const btn = document.getElementById('start-btn');
+  if (m.classList.contains('open') && !m.contains(e.target) && !btn.contains(e.target)) {
+    closeStartMenu();
+  }
+});
+
+// ════════════════════════════════════════
+//  SHUTDOWN
+// ════════════════════════════════════════
+function showShutdown() {
+  document.getElementById('shutdown-modal').classList.add('open');
+}
+function closeShutdown() {
+  document.getElementById('shutdown-modal').classList.remove('open');
+}
+function happyFathersDay() {
+  closeShutdown();
+  // Confetti burst — simple CSS-only approach
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;background:rgba(0,0,0,0.7);pointer-events:none;';
+  overlay.innerHTML = `
+    <div style="font-size:clamp(24px,6vw,48px);font-family:'Press Start 2P',monospace;color:#F5F0E8;text-align:center;line-height:1.8;text-shadow:3px 3px 0 #C0522A;">
+      Happy Father's Day,<br>Daddy! 🎉
+    </div>
+    <div style="font-family:'VT323',monospace;font-size:clamp(18px,4vw,28px);color:#aaa;text-align:center;">
+      19 years of being the best dad<br>in the entire operating system.
+    </div>`;
+  document.body.appendChild(overlay);
+  setTimeout(() => overlay.remove(), 4000);
+}
+
+// ════════════════════════════════════════
+//  GLASSES FINDER
+// ════════════════════════════════════════
+const glassesLocations = [
+  { emoji: '🛒', text: 'LAST SEEN: Costco cart.\nBetween all the items with prices ending in .97 😉' },
+  { emoji: '🍳', text: 'LOCATED: Kitchen counter.\nJK you don\'t cook why would they be there.' },
+  { emoji: '😎', text: 'FOUND: On your face.\nYou are wearing them right now.' },
+  { emoji: '👩', text: 'ERROR: Glasses not found.\nTry asking Mommy. She always knows.' },
+  { emoji: '🛁', text: 'GPS PING: Bathroom shelf.\nBehind the moisturizer you never use.' },
+  { emoji: '🤖', text: 'CLAUDE SUGGESTS: Have you tried\nlooking where you last took them off?\n(It also doesn\'t know.)' },
+];
+let glassesSearchCount = 0;
+let glassesIdx = -1;
+
+function locateGlasses() {
+  const result = document.getElementById('glasses-result');
+  const emoji = document.getElementById('glasses-emoji');
+  const status = document.getElementById('glasses-status');
+  const count = document.getElementById('glasses-count');
+
+  result.textContent = 'Scanning…';
+  emoji.textContent = '📡';
+  status.textContent = 'Scanning…';
+
+  setTimeout(() => {
+    glassesIdx = (glassesIdx + 1) % glassesLocations.length;
+    const loc = glassesLocations[glassesIdx];
+    emoji.textContent = loc.emoji;
+    result.style.whiteSpace = 'pre-line';
+    result.textContent = loc.text;
+    glassesSearchCount++;
+    count.textContent = `Searches today: ${glassesSearchCount} (above average)`;
+    status.textContent = 'Scan complete';
+  }, 2500);
+}
+
+// ════════════════════════════════════════
+//  UPTIME COUNTER
+// ════════════════════════════════════════
+function updateUptime() {
+  const start = new Date(2007, 0, 25); // Jan 25 2007
+  const now = new Date();
+  let years = now.getFullYear() - start.getFullYear();
+  let months = now.getMonth() - start.getMonth();
+  let days = now.getDate() - start.getDate();
+  if (days < 0) { months--; days += new Date(now.getFullYear(), now.getMonth(), 0).getDate(); }
+  if (months < 0) { years--; months += 12; }
+  const el = document.getElementById('uptime-val');
+  if (el) el.textContent = years + ' yrs, ' + months + ' mo, ' + days + ' days (no crashes)';
+}
+updateUptime();
+</script>
+</body>
+</html>

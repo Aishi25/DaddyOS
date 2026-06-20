@@ -213,7 +213,9 @@
     .desktop-icons {
       position: absolute;
       top: 16px; left: 16px;
-      display: flex; flex-direction: column; gap: 16px;
+      display: flex; flex-direction: column; flex-wrap: wrap;
+      gap: 16px;
+      max-height: calc(100vh - 80px);
       z-index: 10;
     }
     .desktop-icon {

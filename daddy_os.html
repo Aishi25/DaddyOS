@@ -134,8 +134,25 @@
       margin: 0 2px;
     }
 
-    #taskbar-clock {
+    #system-tray {
       margin-left: auto;
+      display: flex; align-items: center;
+      border: 2px solid;
+      border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
+      padding: 0 4px;
+      gap: 0;
+    }
+    .tray-item {
+      font-family: 'VT323', monospace;
+      font-size: 15px;
+      padding: 0 8px;
+      white-space: nowrap;
+      border-right: 1px solid var(--silver-dark);
+      line-height: 28px;
+    }
+    .tray-item:last-child { border-right: none; }
+
+    #taskbar-clock {
       font-family: 'VT323', monospace;
       font-size: 18px;
       padding: 2px 8px;
@@ -934,6 +951,11 @@ Aishi ❤︎</div>
   </button>
   <div class="taskbar-divider"></div>
   <div id="taskbar-btns"></div>
+  <div id="system-tray">
+    <div class="tray-item">☕ Chai Level: LOW</div>
+    <div class="tray-item">🔋 Dad Battery: 100%</div>
+    <div class="tray-item">🧠 Dad-Aishi Sync: ACTIVE</div>
+  </div>
   <div id="taskbar-clock"></div>
 </div>
 

@@ -620,8 +620,8 @@
 
     /* ── Letter window fixed height with scroll ── */
     #win-letter { max-height: 500px; }
-    #win-letter .win-body, #win-shivi .win-body { min-height: unset; overflow-y: auto; }
-    #win-shivi .txt-body { font-size: 22px; line-height: 1.5; }
+    #win-letter .win-body, #win-shivi .win-body, #win-mommy .win-body { min-height: unset; overflow-y: auto; }
+    #win-shivi .txt-body, #win-mommy .txt-body { font-size: 22px; line-height: 1.5; }
     #win-letter .txt-body { font-size: 22px; line-height: 1.5; }
 
     /* ── Chat window body is flex column so input pins to bottom ── */
@@ -673,13 +673,9 @@
 
   <!-- Desktop icons -->
   <div class="desktop-icons">
-    <div class="desktop-icon" onclick="openWin('win-photos')">
-      <div class="di-emoji">📷</div>
-      <div class="di-label">Our<br>Photos</div>
-    </div>
-    <div class="desktop-icon" onclick="openWin('win-letter')">
-      <div class="di-emoji">💌</div>
-      <div class="di-label">Letter_from_<br>Aishi.txt</div>
+    <div class="desktop-icon" onclick="openWin('win-about')">
+      <div class="di-emoji">ℹ️</div>
+      <div class="di-label">About<br>Daddy</div>
     </div>
     <div class="desktop-icon" onclick="openWin('win-wisdom')">
       <div class="di-emoji">🧠</div>
@@ -693,21 +689,29 @@
       <div class="di-emoji">🚴</div>
       <div class="di-label">BikeTracker<br>.app</div>
     </div>
-    <div class="desktop-icon" onclick="openWin('win-claude')">
-      <div class="di-emoji">🤖</div>
-      <div class="di-label">Chat_with_<br>Aishi.exe</div>
-    </div>
-    <div class="desktop-icon" onclick="openWin('win-about')">
-      <div class="di-emoji">ℹ️</div>
-      <div class="di-label">About<br>Daddy</div>
-    </div>
     <div class="desktop-icon" onclick="openWin('win-glasses')">
       <div class="di-emoji">🕵️</div>
       <div class="di-label">Glasses<br>Finder.exe</div>
     </div>
+    <div class="desktop-icon" onclick="openWin('win-claude')">
+      <div class="di-emoji">🤖</div>
+      <div class="di-label">Chat_with_<br>Aishi.exe</div>
+    </div>
+    <div class="desktop-icon" onclick="openWin('win-letter')">
+      <div class="di-emoji">💌</div>
+      <div class="di-label">Letter_from_<br>Aishi.txt</div>
+    </div>
     <div class="desktop-icon" onclick="openWin('win-shivi')">
       <div class="di-emoji">💌</div>
       <div class="di-label">Letter_from_<br>Shivi.txt</div>
+    </div>
+    <div class="desktop-icon" onclick="openWin('win-mommy')">
+      <div class="di-emoji">💌</div>
+      <div class="di-label">Letter_from_<br>Mommy.txt</div>
+    </div>
+    <div class="desktop-icon" onclick="openWin('win-photos')">
+      <div class="di-emoji">📷</div>
+      <div class="di-label">Our<br>Photos</div>
     </div>
   </div>
 
@@ -919,6 +923,20 @@ Aishi ❤︎</div>
     <div class="win-statusbar"><span>System Properties</span><span>All systems nominal</span></div>
   </div>
 
+  <!-- ── WINDOW: Letter from Mommy ── -->
+  <div class="win" id="win-mommy" style="top:80px; left:120px; width:min(1020px,88vw);">
+    <div class="win-titlebar" data-win="win-mommy">
+      <span class="win-title-icon">💌</span>
+      <span class="win-title-text">Letter_from_Mommy.txt — Notepad</span>
+      <button class="win-btn" onclick="closeWin('win-mommy')">✕</button>
+    </div>
+    <div class="win-menubar"><span>File</span><span>Edit</span><span>Help</span></div>
+    <div class="win-body">
+      <div class="txt-body">[Mommy's letter goes here 💛]</div>
+    </div>
+    <div class="win-statusbar"><span>Letter_from_Mommy.txt</span><span>Read-Only</span></div>
+  </div>
+
   <!-- ── WINDOW: Letter from Shivi ── -->
   <div class="win" id="win-shivi" style="top:80px; left:120px; width:min(1020px,88vw);">
     <div class="win-titlebar" data-win="win-shivi">
@@ -1018,6 +1036,9 @@ Spending time with you is just amazing and I love every second of it. I love you
     </div>
     <div class="start-item" onclick="openWin('win-shivi'); closeStartMenu()">
       <span class="si-icon">💌</span> Letter from Shivi
+    </div>
+    <div class="start-item" onclick="openWin('win-mommy'); closeStartMenu()">
+      <span class="si-icon">💌</span> Letter from Mommy
     </div>
     <div class="start-item separator" onclick="showShutdown(); closeStartMenu()">
       <span class="si-icon">⏻</span> Shut Down Daddy…

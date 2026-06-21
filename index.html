@@ -620,7 +620,8 @@
 
     /* ── Letter window fixed height with scroll ── */
     #win-letter { max-height: 500px; }
-    #win-letter .win-body { min-height: unset; overflow-y: auto; }
+    #win-letter .win-body, #win-shivi .win-body { min-height: unset; overflow-y: auto; }
+    #win-shivi .txt-body { font-size: 22px; line-height: 1.5; }
     #win-letter .txt-body { font-size: 22px; line-height: 1.5; }
 
     /* ── Chat window body is flex column so input pins to bottom ── */
@@ -703,6 +704,10 @@
     <div class="desktop-icon" onclick="openWin('win-glasses')">
       <div class="di-emoji">🕵️</div>
       <div class="di-label">GlassesFinder.exe</div>
+    </div>
+    <div class="desktop-icon" onclick="openWin('win-shivi')">
+      <div class="di-emoji">💌</div>
+      <div class="di-label">Letter_from_Shivi.txt</div>
     </div>
   </div>
 
@@ -914,6 +919,20 @@ Aishi ❤︎</div>
     <div class="win-statusbar"><span>System Properties</span><span>All systems nominal</span></div>
   </div>
 
+  <!-- ── WINDOW: Letter from Shivi ── -->
+  <div class="win" id="win-shivi" style="top:80px; left:120px; width:min(1020px,88vw);">
+    <div class="win-titlebar" data-win="win-shivi">
+      <span class="win-title-icon">💌</span>
+      <span class="win-title-text">Letter_from_Shivi.txt — Notepad</span>
+      <button class="win-btn" onclick="closeWin('win-shivi')">✕</button>
+    </div>
+    <div class="win-menubar"><span>File</span><span>Edit</span><span>Help</span></div>
+    <div class="win-body">
+      <div class="txt-body">[Shivi's letter goes here 💛]</div>
+    </div>
+    <div class="win-statusbar"><span>Letter_from_Shivi.txt</span><span>Read-Only</span></div>
+  </div>
+
   <!-- ── WINDOW: GlassesFinder ── -->
   <div class="win" id="win-glasses" style="top:100px; left:160px; width:min(600px,78vw);">
     <div class="win-titlebar" data-win="win-glasses">
@@ -988,6 +1007,9 @@ Aishi ❤︎</div>
     </div>
     <div class="start-item" onclick="openWin('win-glasses'); closeStartMenu()">
       <span class="si-icon">🕵️</span> GlassesFinder.exe
+    </div>
+    <div class="start-item" onclick="openWin('win-shivi'); closeStartMenu()">
+      <span class="si-icon">💌</span> Letter from Shivi
     </div>
     <div class="start-item separator" onclick="showShutdown(); closeStartMenu()">
       <span class="si-icon">⏻</span> Shut Down Daddy…

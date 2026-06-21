@@ -94,7 +94,7 @@
     /* ── Taskbar ── */
     #taskbar {
       position: fixed; bottom: 0; left: 0; right: 0;
-      height: 40px;
+      height: 54px;
       background: var(--silver);
       border-top: 2px solid var(--white);
       display: flex; align-items: center;
@@ -144,21 +144,21 @@
     }
     .tray-item {
       font-family: 'VT323', monospace;
-      font-size: 15px;
-      padding: 0 8px;
+      font-size: 20px;
+      padding: 0 10px;
       white-space: nowrap;
       border-right: 1px solid var(--silver-dark);
-      line-height: 28px;
+      line-height: 40px;
     }
     .tray-item:last-child { border-right: none; }
 
     #taskbar-clock {
       font-family: 'VT323', monospace;
-      font-size: 18px;
-      padding: 2px 8px;
+      font-size: 22px;
+      padding: 4px 10px;
       border: 2px solid;
       border-color: var(--silver-dark) var(--white) var(--white) var(--silver-dark);
-      min-width: 70px; text-align: center;
+      min-width: 80px; text-align: center;
       line-height: 1;
     }
 
@@ -232,7 +232,7 @@
       top: 16px; left: 16px;
       display: flex; flex-direction: column; flex-wrap: wrap;
       gap: 16px;
-      max-height: calc(100vh - 80px);
+      max-height: calc(100vh - 94px);
       z-index: 10;
     }
     .desktop-icon {
